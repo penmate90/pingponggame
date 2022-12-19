@@ -20,7 +20,15 @@ var ball = {
     dx:3,
     dy:3
 }
+var wx=0;
+var wy=0;
+var ws=0;
+gamestat=false;
 
+ function preload() {
+   hit=loadSound("ball_touch_paddel.wav")
+   miss=loadSound("missed.wav")
+ }
 function setup(){
   var canvas =  createCanvas(700,600);
   
@@ -29,15 +37,28 @@ function setup(){
   video.hide();
   video.size(700,600)
   pos=ml5.poseNet(video,modeloaded)
+  pos.on('pose', gotposes)
 }
 function modeloaded() {
   console.log("MODEL LOADED");
   stats=true;
+  document.getElementById("stats").innerHTML="Game is loading";
 }
 
-function draw(){
+function draw(){ 
+
+  if (gamestat==true) {
+    
+  
 image(video,0,0,700,600);
  //background(0); 
+if (ws>0) {
+  fill("#42c5f5")
+  stroke("#42c5f5");
+  circle(5,wx,wy);
+
+}
+
 
  fill("black");
  stroke("black");
@@ -54,7 +75,7 @@ image(video,0,0,700,600);
    fill(250,0,0);
     stroke(0,0,250);
     strokeWeight(0.5);
-   paddle1Y = mouseY; 
+   paddle1Y = wy; 
    rect(paddle1X,paddle1Y,paddle1,paddle1Height,100);
    
    
@@ -73,12 +94,20 @@ image(video,0,0,700,600);
    models();
    
    //function move call which in very important
-    move();
+    move(); }
+}
+function start() {
+  gamestat=true;
+  document.getElementById("stats").innerHTML="Game is ready";
 }
 
+function restart() {
+  pcscore=0;
+  playerscore=0;
+  loop();
+}
+//function reset when ball does notcame in the contact of padde  
 
-
-//function reset when ball does notcame in the contact of padde
 function reset(){
    ball.x = width/2+100,
    ball.y = height/2+100;
@@ -127,11 +156,13 @@ function move(){
   if (ball.y >= paddle1Y&& ball.y <= paddle1Y + paddle1Height) {
     ball.dx = -ball.dx+0.5;
     playerscore++;
+    hit.play();
   }
   else{
     pcscore++;
     reset();
     navigator.vibrate(100);
+    miss.play();
   }
 }
 if(pcscore ==4){
@@ -142,7 +173,7 @@ if(pcscore ==4){
     stroke("white");
     textSize(25)
     text("Game Over!☹☹",width/2,height/2);
-    text("Reload The Page!",width/2,height/2+30)
+    text("Press restart to play again!",width/2,height/2+30)
     noLoop();
     pcscore = 0;
 }
@@ -171,4 +202,13 @@ function paddleInCanvas(){
   if(mouseY < 0){
     mouseY =0;
   }  
+}  
+
+function gotposes(results) {
+  if (results[0].length!=0) {
+    console.log(results);
+    ws=results[0].pose.rightWrist.score;
+    wy=results[0].pose.rightWrist.y;
+    wx=results[0].pose.rightWrist.x;
+  }
 }
